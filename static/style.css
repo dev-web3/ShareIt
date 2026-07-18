@@ -69,6 +69,10 @@ button.secondary {
   background: #475569;
 }
 
+button.danger {
+  background: #ef4444;
+}
+
 .result {
   margin-top: 12px;
   color: #cbd5e1;
@@ -88,4 +92,9 @@ button.secondary {
   border: 1px solid #334155;
   border-radius: 10px;
   background: #0f172a;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
 }

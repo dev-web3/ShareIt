@@ -10,7 +10,7 @@
   <div class="container">
     <div class="card hero">
       <h1>File Share</h1>
-      <p>Upload ZIP files and download them from this machine.</p>
+      <p>Upload ZIP files and manage them from this machine.</p>
     </div>
 
     <div class="card">
@@ -76,10 +76,25 @@
         item.className = "file-item";
         item.innerHTML = `
           <span>${f.name}</span>
-          <a href="/api/files/${encodeURIComponent(f.name)}">Download</a>
+          <div class="actions">
+            <a href="/api/files/${encodeURIComponent(f.name)}">Download</a>
+            <button class="danger" onclick="deleteFile('${f.name}')">Delete</button>
+          </div>
         `;
         fileList.appendChild(item);
       });
+    }
+
+    async function deleteFile(filename) {
+      if (!confirm(`Delete ${filename}?`)) return;
+
+      const res = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+      alert(data.message || "Done");
+      loadFiles();
     }
 
     loadFiles();

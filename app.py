@@ -1,6 +1,6 @@
+from flask import Flask, request, jsonify, send_file, render_template
 import os
 import uuid
-from flask import Flask, request, jsonify, send_file, render_template
 
 app = Flask(__name__)
 
@@ -57,6 +57,16 @@ def download_file(filename):
         return jsonify({"success": False, "message": "Not found"}), 404
 
     return send_file(path, as_attachment=True, download_name=filename)
+
+
+@app.route("/api/files/<path:filename>", methods=["DELETE"])
+def delete_file(filename):
+    path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(path):
+        return jsonify({"success": False, "message": "Not found"}), 404
+
+    os.remove(path)
+    return jsonify({"success": True, "message": "Deleted", "filename": filename})
 
 
 if __name__ == "__main__":
