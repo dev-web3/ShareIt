@@ -40,7 +40,7 @@ HTML_PAGE = """
 
       const data = await res.json();
       document.getElementById("result").innerText =
-        data.success ? "Uploaded. File ID: " + data.file_id : data.message;
+        data.success ? "Uploaded. Saved as: " + data.saved_name : data.message;
 
       loadFiles();
     }
@@ -54,7 +54,7 @@ HTML_PAGE = """
 
       data.files.forEach(f => {
         const li = document.createElement("li");
-        li.innerHTML = `<a href="/api/files/${f.file_id}" target="_blank">${f.name}</a>`;
+        li.innerHTML = `<a href="/api/files/${encodeURIComponent(f.name)}" target="_blank">${f.name}</a>`;
         ul.appendChild(li);
       });
     }
@@ -71,17 +71,29 @@ def home():
     return render_template_string(HTML_PAGE)
 
 
+def unique_filename(original_name) -> str:
+    base, ext = os.path.splitext(original_name)
+    path = os.path.join(UPLOAD_DIR, original_name)
+
+    if not os.path.exists(path):
+        return original_name
+
+    rand_id = uuid.uuid4().hex[:5]
+    return f"{base}_{rand_id}{ext}"
+
+
 @app.route("/api/files/upload", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
         return jsonify({"success": False, "message": "No file"}), 400
 
     f = request.files["file"]
-    file_id = str(uuid.uuid4())
-    path = os.path.join(UPLOAD_DIR, f"{file_id}.zip")
+    original_name = f.filename
+    saved_name = unique_filename(original_name)
+    path = os.path.join(UPLOAD_DIR, saved_name)
     f.save(path)
 
-    return jsonify({"success": True, "file_id": file_id, "message": "uploaded"})
+    return jsonify({"success": True, "saved_name": saved_name, "message": "uploaded"})
 
 
 @app.route("/api/files/list", methods=["GET"])
@@ -90,18 +102,17 @@ def list_files():
     for name in os.listdir(UPLOAD_DIR):
         path = os.path.join(UPLOAD_DIR, name)
         if os.path.isfile(path):
-            file_id = name.rsplit(".", 1)[0]
-            files.append({"file_id": file_id, "name": name})
+            files.append({"name": name})
     return jsonify({"success": True, "files": files})
 
 
-@app.route("/api/files/<file_id>", methods=["GET"])
-def download_file(file_id):
-    path = os.path.join(UPLOAD_DIR, f"{file_id}.zip")
+@app.route("/api/files/<path:filename>", methods=["GET"])
+def download_file(filename):
+    path = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(path):
         return jsonify({"success": False, "message": "Not found"}), 404
 
-    return send_file(path, as_attachment=True, download_name=f"{file_id}.zip")
+    return send_file(path, as_attachment=True, download_name=filename)
 
 
 if __name__ == "__main__":
