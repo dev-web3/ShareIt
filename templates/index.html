@@ -1,103 +1,112 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>File Share</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <div class="container">
-    <div class="card hero">
-      <h1>File Share</h1>
-      <p>Upload ZIP files and manage them from this machine.</p>
-    </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>File Share</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
 
-    <div class="card">
-      <h2>Upload a file</h2>
-      <div class="upload-row">
-        <input type="file" id="fileInput" accept=".zip" />
-        <button onclick="uploadFile()">Upload</button>
+  <body>
+    <div class="container">
+      <div class="card hero">
+        <h1>File Share</h1>
+        <p>Upload ZIP files and manage them from this machine.</p>
       </div>
-      <p id="result" class="result"></p>
-    </div>
 
-    <div class="card">
-      <div class="section-head">
-        <h2>Uploaded files</h2>
-        <button class="secondary" onclick="loadFiles()">Refresh</button>
+      <div class="card">
+        <h2>Upload a file</h2>
+        <div class="upload-row">
+          <input type="file" id="fileInput" accept=".zip" />
+          <button onclick="uploadFile()">Upload</button>
+        </div>
+        <p id="result" class="result"></p>
       </div>
-      <div id="fileList" class="file-list"></div>
+
+      <div class="card">
+        <div class="section-head">
+          <h2>Uploaded files</h2>
+          <button class="secondary" onclick="loadFiles()">Refresh</button>
+        </div>
+        <div id="fileList" class="file-list"></div>
+      </div>
     </div>
-  </div>
 
-  <script>
-    async function uploadFile() {
-      const file = document.getElementById("fileInput").files[0];
-      const result = document.getElementById("result");
+    <script>
+      async function uploadFile() {
+        const input = document.getElementById("fileInput");
+        const file = input.files[0];
+        const result = document.getElementById("result");
 
-      if (!file) {
-        result.textContent = "Choose a file first.";
-        return;
+        if (!file) {
+          result.textContent = "Choose a file first.";
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        result.textContent = data.success
+          ? `Uploaded successfully: ${data.saved_name}`
+          : data.message || "Upload failed";
+
+        if (data.success) {
+          input.value = "";
+        }
+
+        loadFiles();
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
+      async function loadFiles() {
+        const fileList = document.getElementById("fileList");
+        fileList.innerHTML = "Loading...";
 
-      const res = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData
-      });
+        const res = await fetch("/api/files/list");
+        const data = await res.json();
 
-      const data = await res.json();
-      result.textContent = data.success
-        ? `Uploaded successfully: ${data.saved_name}`
-        : data.message || "Upload failed";
+        fileList.innerHTML = "";
 
-      loadFiles();
-    }
+        if (!data.files || data.files.length === 0) {
+          fileList.innerHTML = "<p class='muted'>No files found.</p>";
+          return;
+        }
 
-    async function loadFiles() {
-      const fileList = document.getElementById("fileList");
-      fileList.innerHTML = "Loading...";
-
-      const res = await fetch("/api/files/list");
-      const data = await res.json();
-
-      fileList.innerHTML = "";
-
-      if (!data.files || data.files.length === 0) {
-        fileList.innerHTML = "<p class='muted'>No files found.</p>";
-        return;
-      }
-
-      data.files.forEach(f => {
-        const item = document.createElement("div");
-        item.className = "file-item";
-        item.innerHTML = `
+        data.files.forEach((f) => {
+          const item = document.createElement("div");
+          item.className = "file-item";
+          item.innerHTML = `
           <span>${f.name}</span>
           <div class="actions">
             <a href="/api/files/${encodeURIComponent(f.name)}">Download</a>
             <button class="danger" onclick="deleteFile('${f.name}')">Delete</button>
           </div>
         `;
-        fileList.appendChild(item);
-      });
-    }
+          fileList.appendChild(item);
+        });
+      }
 
-    async function deleteFile(filename) {
-      if (!confirm(`Delete ${filename}?`)) return;
+      async function deleteFile(filename) {
+        if (!confirm(`Delete ${filename}?`)) return;
 
-      const res = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
-        method: "DELETE"
-      });
+        const res = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+          method: "DELETE",
+        });
 
-      const data = await res.json();
-      alert(data.message || "Done");
+        const data = await res.json();
+        alert(data.message || "Done");
+        loadFiles();
+      }
+
       loadFiles();
-    }
-
-    loadFiles();
-  </script>
-</body>
+    </script>
+  </body>
 </html>
