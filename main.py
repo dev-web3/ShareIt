@@ -10,13 +10,17 @@ HTML_PAGE = """
 <!doctype html>
 <html>
 <head>
-  <title>Share ZIP</title>
+  <title>Share Files</title>
 </head>
 <body>
   <h2>Upload ZIP File</h2>
   <input type="file" id="fileInput" accept=".zip" />
   <button onclick="uploadFile()">Upload</button>
   <p id="result"></p>
+
+  <h2>Files in Server</h2>
+  <button onclick="loadFiles()">Refresh List</button>
+  <ul id="fileList"></ul>
 
   <script>
     async function uploadFile() {
@@ -37,7 +41,25 @@ HTML_PAGE = """
       const data = await res.json();
       document.getElementById("result").innerText =
         data.success ? "Uploaded. File ID: " + data.file_id : data.message;
+
+      loadFiles();
     }
+
+    async function loadFiles() {
+      const res = await fetch("/api/files/list");
+      const data = await res.json();
+
+      const ul = document.getElementById("fileList");
+      ul.innerHTML = "";
+
+      data.files.forEach(f => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="/api/files/${f.file_id}" target="_blank">${f.name}</a>`;
+        ul.appendChild(li);
+      });
+    }
+
+    loadFiles();
   </script>
 </body>
 </html>
@@ -60,6 +82,17 @@ def upload_file():
     f.save(path)
 
     return jsonify({"success": True, "file_id": file_id, "message": "uploaded"})
+
+
+@app.route("/api/files/list", methods=["GET"])
+def list_files():
+    files = []
+    for name in os.listdir(UPLOAD_DIR):
+        path = os.path.join(UPLOAD_DIR, name)
+        if os.path.isfile(path):
+            file_id = name.rsplit(".", 1)[0]
+            files.append({"file_id": file_id, "name": name})
+    return jsonify({"success": True, "files": files})
 
 
 @app.route("/api/files/<file_id>", methods=["GET"])
