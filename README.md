@@ -1,5 +1,10 @@
 # ShareIt - File Share App
 
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Flask](https://img.shields.io/badge/Flask-3.0.3-black)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+
 A simple Flask-based local file sharing app for uploading, listing, downloading, and deleting ZIP files through a web page and API.
 
 ## Features
@@ -34,6 +39,10 @@ project/
     ├── style.css
     └── app.js
 ```
+
+## Screenshots
+
+![ShareIt](./docs/ShareIt.png)
 
 ## Setup
 
@@ -101,17 +110,17 @@ DELETE /api/files/<filename>
 
 ## Usage
 
- - Open the web page in browser
- - Choose a ZIP file
- - Click Upload
- - View files in the list
- - Download or delete files as needed
+1. Open the web page in browser
+2. Choose a ZIP file
+3. Click Upload
+4. View files in the list
+5. Download or delete files as needed
 
 ## Notes
 
- - This app is intended for local network or personal machine usage
- - Uploaded files are saved inside the uploads/ folder
- - If a file with the same name already exists, a short random suffix is added
+- This app is intended for local network or personal machine usage
+- Uploaded files are saved inside the uploads/ folder
+- If a file with the same name already exists, a short random suffix is added
 
 ## Examples
 
@@ -135,10 +144,11 @@ curl -X DELETE http://127.0.0.1:5000/api/files/example.zip
 ```
 
 ## Future Improvements
- - File size limit
- - Better security
- - Authentication
- - Folder upload support
- - Progress bar for uploads
- - Drag and drop upload
- - File metadata storage in database
+
+- File size limit
+- Better security
+- Authentication
+- Folder upload support
+- Progress bar for uploads
+- Drag and drop upload
+- File metadata storage in database
